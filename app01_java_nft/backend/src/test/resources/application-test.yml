@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: nft-certs-backend
+  datasource:
+    url: jdbc:h2:mem:nft-certs-test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+pinata:
+  jwt: test-jwt
+  base-url: http://localhost:0/unused
+
+web3:
+  rpc-url: http://localhost:0/unused
+  minter-private-key: "0x0000000000000000000000000000000000000000000000000000000000000f"
+  contract-address: "0x5FbDB2315678afecb367f032d93F642f64180aa"
+
+explorer:
+  etherscan-base-url: http://localhost:8545/tx/
+  opensea-base-url: https://testnets.opensea.io/assets/
+  rarible-base-url: https://rarible.com/token/

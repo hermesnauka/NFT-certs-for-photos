@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: nft-certs-backend
+  datasource:
+    url: jdbc:h2:file:./data/nft-certs-db;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+server:
+  port: 8080
+
+pinata:
+  jwt: ${PINATA_JWT:}
+  api-key: ${PINATA_API_KEY:}
+  api-secret: ${PINATA_API_SECRET:}
+  base-url: https://api.pinata.cloud
+
+web3:
+  rpc-url: ${WEB3J_RPC_URL:http://localhost:8545}
+  minter-private-key: ${MINTER_PRIVATE_KEY:}
+  contract-address: ${NFT_CONTRACT_ADDRESS:}
+
+explorer:
+  etherscan-base-url: ${ETHERSCAN_BASE_URL:http://localhost:8545/tx/}
+  opensea-base-url: ${OPENSEA_BASE_URL:https://testnets.opensea.io/assets/}
+  rarible-base-url: ${RARIBLE_BASE_URL:https://rarible.com/token/}
