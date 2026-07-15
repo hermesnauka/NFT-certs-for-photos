@@ -1,5 +1,7 @@
 package com.gandarych.nftcerts.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -14,19 +16,31 @@ import org.springframework.stereotype.Component;
 @Profile("!test")
 public class StartupConfigurationValidator implements ApplicationRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(StartupConfigurationValidator.class);
+
     private final PinataProperties pinataProperties;
     private final Web3Properties web3Properties;
+    private final StorageProperties storageProperties;
 
-    public StartupConfigurationValidator(PinataProperties pinataProperties, Web3Properties web3Properties) {
+    public StartupConfigurationValidator(PinataProperties pinataProperties, Web3Properties web3Properties,
+                                          StorageProperties storageProperties) {
         this.pinataProperties = pinataProperties;
         this.web3Properties = web3Properties;
+        this.storageProperties = storageProperties;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!pinataProperties.hasJwt() && !pinataProperties.hasApiKeyPair()) {
+        if (!storageProperties.isMock() && !storageProperties.isPinata()) {
             throw new IllegalStateException(
-                    "Missing Pinata credentials: set PINATA_JWT, or both PINATA_API_KEY and PINATA_API_SECRET");
+                    "Invalid app.storage.provider '" + storageProperties.getProvider() + "': must be 'pinata' or 'mock'");
+        }
+        log.info("Storage provider: {}", storageProperties.getProvider());
+
+        if (storageProperties.isPinata() && !pinataProperties.hasJwt() && !pinataProperties.hasApiKeyPair()) {
+            throw new IllegalStateException(
+                    "Missing Pinata credentials: set PINATA_JWT, or both PINATA_API_KEY and PINATA_API_SECRET "
+                            + "(or set app.storage.provider=mock to run without Pinata)");
         }
         if (isBlank(web3Properties.getContractAddress())) {
             throw new IllegalStateException("Missing required environment variable: NFT_CONTRACT_ADDRESS");

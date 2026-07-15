@@ -4,7 +4,7 @@ import com.gandarych.nftcerts.config.PinataProperties;
 import com.gandarych.nftcerts.error.IpfsPinningException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,11 +18,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Real {@link IpfsStorageService} implementation backed by the Pinata pinning API. Used as the
- * primary bean in every profile except {@code test}.
+ * Real {@link IpfsStorageService} implementation backed by the Pinata pinning API. Active when
+ * {@code app.storage.provider} is {@code pinata} (the default) — see {@code StorageProperties}.
  */
 @Service
-@Profile("!test")
+@ConditionalOnProperty(prefix = "app.storage", name = "provider", havingValue = "pinata", matchIfMissing = true)
 public class PinataIpfsStorageService implements IpfsStorageService {
 
     private static final String PIN_FILE_PATH = "/pinning/pinFileToIPFS";

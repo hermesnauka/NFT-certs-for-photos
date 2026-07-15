@@ -15,6 +15,10 @@ spring:
       max-file-size: 25MB
       max-request-size: 25MB
 
+app:
+  storage:
+    provider: mock
+
 pinata:
   jwt: test-jwt
   base-url: http://localhost:0/unused

@@ -1,7 +1,7 @@
 package com.gandarych.nftcerts.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -13,12 +13,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Local, no-network stand-in for {@link IpfsStorageService} used only under the {@code test}
- * profile. Writes content to a local temp directory and returns a deterministic fake
- * {@code ipfs://stub-<sha256-of-content>} URI, so tests never depend on Pinata availability.
+ * Local, no-network stand-in for {@link IpfsStorageService}. Active when {@code
+ * app.storage.provider=mock} — either for automated tests (set in {@code application-test.yml})
+ * or a manual dev run without Pinata credentials (see {@code StorageProperties}). Writes content
+ * to a local temp directory and returns a deterministic fake {@code ipfs://stub-<sha256>} URI.
  */
 @Service
-@Profile("test")
+@ConditionalOnProperty(prefix = "app.storage", name = "provider", havingValue = "mock")
 public class LocalStubIpfsStorageService implements IpfsStorageService {
 
     private final ObjectMapper objectMapper;

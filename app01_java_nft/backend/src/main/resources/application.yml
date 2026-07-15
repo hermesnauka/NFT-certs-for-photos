@@ -18,6 +18,10 @@ spring:
 server:
   port: 8080
 
+app:
+  storage:
+    provider: ${APP_STORAGE_PROVIDER:pinata}
+
 pinata:
   jwt: ${PINATA_JWT:}
   api-key: ${PINATA_API_KEY:}

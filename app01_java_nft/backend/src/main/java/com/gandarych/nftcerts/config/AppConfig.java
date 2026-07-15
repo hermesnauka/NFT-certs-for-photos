@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties({PinataProperties.class, Web3Properties.class, ExplorerLinkProperties.class})
+@EnableConfigurationProperties({PinataProperties.class, Web3Properties.class, ExplorerLinkProperties.class, StorageProperties.class})
 public class AppConfig {
 
     @Bean

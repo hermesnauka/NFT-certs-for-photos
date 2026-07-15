@@ -17,7 +17,10 @@ public class Certificate {
     @Id
     private Long tokenId;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    // EAGER: CertificateDtoMapper always reads artwork fields (title, IPFS URIs) to build the DTO,
+    // and with open-in-view disabled there is no session left to resolve a lazy proxy by the time
+    // the controller layer maps the entity returned from CertificateService.
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "artwork_id", nullable = false, unique = true)
     private Artwork artwork;
 
