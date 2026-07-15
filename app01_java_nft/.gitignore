@@ -35,6 +35,9 @@ node_modules/
 target/
 dist/
 
+# H2 file-based database (generated at runtime, see backend/src/main/resources/application.yml)
+backend/data/
+
 
 
 ######### Python
