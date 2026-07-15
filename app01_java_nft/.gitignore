@@ -38,6 +38,11 @@ dist/
 # H2 file-based database (generated at runtime, see backend/src/main/resources/application.yml)
 backend/data/
 
+# Next.js build output
+frontend/.next/
+frontend/out/
+frontend/.env.local
+
 
 
 ######### Python
