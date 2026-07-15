@@ -64,7 +64,7 @@ C4Container
   [09-deployment-and-devops.md](./09-deployment-and-devops.md)).
 - Full design: [06-smart-contract-design.md](./06-smart-contract-design.md).
 
-### 3.2 `backend/` — Spring Boot 3 (Java 21), package `com.devpowers.nftcerts`
+### 3.2 `backend/` — Spring Boot 3 (Java 21), package `com.gandarych.nftcerts`
 
 - **`HashingService`** — streaming SHA-256 hashing of uploaded files (NFR-1).
 - **`WatermarkService`** — embeds content hash + artist DID into image EXIF/XMP metadata via
@@ -123,7 +123,7 @@ app01_java_nft/
 │   ├── scripts/                # Local deploy scripts (Hardhat network only)
 │   └── hardhat.config.ts
 ├── backend/                    # Spring Boot 3, Java 21, Maven
-│   ├── src/main/java/com/devpowers/nftcerts/
+│   ├── src/main/java/com/gandarych/nftcerts/
 │   │   ├── upload/              # HashingService, WatermarkService
 │   │   ├── storage/              # IpfsStorageService (Pinata impl + local fake)
 │   │   ├── identity/              # KycVerificationService (mock)

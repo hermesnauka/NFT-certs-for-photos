@@ -22,7 +22,7 @@ Full product spec: see root `../requirements.md` (`../requirements_pl.md` for Po
 - `NFT_CONTRACT_ADDRESS`, `WEB3J_RPC_URL` (default `http://localhost:8545` for local Hardhat node), `MINTER_PRIVATE_KEY` (local Hardhat test account only — never a real-funds key).
 
 ## Conventions
-- Backend package root: `com.devpowers.nftcerts`; Spring Boot conventions (constructor injection, `@Service`/`@RestController` layering, no field injection).
+- Backend package root: `com.gandarych.nftcerts`; Spring Boot conventions (constructor injection, `@Service`/`@RestController` layering, no field injection).
 - Solidity: OpenZeppelin contracts only, no hand-rolled token-standard logic.
 - Frontend: App Router, server components by default, `"use client"` only where wallet/browser APIs are needed.
 - Known simplifications (full ADR in `docs/sdlc/10-glossary-and-decisions.md`): KYC is a mock auto-verifier behind `KycVerificationService`; watermarking is metadata-based (EXIF/XMP), not steganographic; contracts run on a local Hardhat chain only. Storage is **real** Pinata pinning behind `IpfsStorageService` (a local-disk fake implements the same interface for offline unit tests only).

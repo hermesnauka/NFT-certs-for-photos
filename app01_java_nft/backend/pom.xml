@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.devpowers</groupId>
+    <groupId>com.gandarych</groupId>
     <artifactId>nft-certs-backend</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>nft-certs-backend</name>
