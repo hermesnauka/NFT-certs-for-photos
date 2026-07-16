@@ -8,17 +8,17 @@ using namespace nftcerts::blockchain;
 // empty-string and "abc" vectors are also the standard published Keccak-256 test vectors.
 TEST(Keccak256Test, EmptyInput) {
     EXPECT_EQ(keccak256Hex(std::string("")),
-              "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a47");
+              "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
 }
 
 TEST(Keccak256Test, AbcInput) {
     EXPECT_EQ(keccak256Hex(std::string("abc")),
-              "0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c4");
+              "0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45");
 }
 
 TEST(Keccak256Test, CertificateMintedEventSignature) {
     EXPECT_EQ(keccak256Hex(std::string("CertificateMinted(uint256,address,bytes32,string)")),
-              "0x5628555e3ae07973161e36fc18780d8505873921d730c9ab6e6922ed4e2262");
+              "0x5628555e3ae07973161e36fc18780d8505873921d730c9ab6e6922ed4e2262a6");
 }
 
 TEST(Keccak256Test, OutputIs32Bytes) {

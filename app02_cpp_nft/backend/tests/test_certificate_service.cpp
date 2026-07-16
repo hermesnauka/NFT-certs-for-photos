@@ -14,6 +14,8 @@ using namespace nftcerts;
 
 class CertificateServiceTest : public ::testing::Test {
 protected:
+    void SetUp() override { db::initSchema(db); }
+
     db::Database db{":memory:"};
     certificate::ArtworkRepository artworkRepository{db};
     certificate::CertificateRepository certificateRepository{db};

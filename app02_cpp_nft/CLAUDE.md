@@ -1,28 +1,34 @@
-# app01_java_nft — Reference Implementation
+# app02_cpp_nft — C++ Port
 
-Full product spec: see root `../requirements.md` (`../requirements_pl.md` for Polish) and `docs/sdlc/` in this folder for architecture, API, smart-contract design, threat model, and test plan.
+C++20 port of the reference implementation in `../app01_java_nft`. Full product spec: root `../requirements.md` (`../requirements_pl.md` for Polish); `docs/sdlc/` in this folder for architecture, API, smart-contract design, threat model, and test plan.
 
 ## Layout
-- `contracts/` — Hardhat + Solidity (ERC-721 + EIP-2981 + Pausable/Burnable). Local dev chain only, no testnet/mainnet deploy.
-- `backend/` — Spring Boot 3 (Java 21), Maven. Hashing, metadata watermarking, Pinata IPFS pinning, mock KYC, Web3j contract calls, PDF certificate generation.
-- `frontend/` — Next.js 14 + TypeScript + Tailwind + wagmi/viem. Creator portal: wallet connect, drag-and-drop mint flow, certificate viewer, EN/PL switch.
+- `contracts/` — Hardhat + Solidity (ERC-721 + EIP-2981 + Pausable/Burnable), same design as app01. Local dev chain only.
+- `backend/` — C++20, Drogon HTTP framework, CMake. SHA-256 hashing (OpenSSL), EXIF watermarking (Exiv2), Pinata IPFS pinning + local mock, mock KYC, hand-rolled Ethereum stack (Keccak-256, ABI encoding, RLP, secp256k1 legacy-tx signing, JSON-RPC client — no Web3 library), PDF certificates (libharu), SQLite persistence, EN/PL i18n.
+- `frontend/` — Next.js 14 + TypeScript + Tailwind + wagmi/viem (same stack as app01).
 - `docs/sdlc/` — SDLC documentation set (numbered 01-10).
 
 ## Build & test
 - Contracts: `cd contracts && npm install && npx hardhat test`
-- Backend: `cd backend && mvn test` (unit tests only; use the local fake storage/chain, no live network or Pinata credentials required). Requires Java 21 — if the machine's default `java` is a different version (check `java -version`), prefix with `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64` (path may vary by OS/distro).
+- Backend:
+  ```
+  cd backend
+  cmake -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build -j$(nproc)
+  ctest --test-dir build --output-on-failure
+  ```
+  System deps: `cmake g++ libdrogon-dev libssl-dev libjsoncpp-dev libsecp256k1-dev libexiv2-dev libsqlite3-dev libhpdf-dev pkg-config`, plus MySQL client headers (`default-libmysqlclient-dev`) which Drogon's CMake config requires even though the app uses SQLite. Without root, download/extract the headers locally (`apt-get download libmariadb-dev && dpkg -x ... <dir>`) and configure with `-DMARIADB_INCLUDE_DIRS=<dir>/usr/include/mariadb -DMYSQL_LIBRARIES=/usr/lib/x86_64-linux-gnu/libmariadb.so.3`. GoogleTest is fetched via FetchContent on first configure (needs network once).
+- Tests are offline unit tests: in-memory SQLite, local stub storage, no live chain or Pinata credentials. Blockchain test vectors (calldata, signed raw tx, hashes) are ethers-v6 ground truth — regenerate with ethers from `contracts/node_modules`, never hand-edit hex literals.
 - Frontend: `cd frontend && npm install && npm run build`
-- Full local smoke test: see `docs/sdlc/08-test-plan.md`
 
-## Storage provider switch
-- `app.storage.provider` (env: `APP_STORAGE_PROVIDER`) = `pinata` (default, real IPFS pinning) or `mock` (local-disk fake, no credentials needed). Active provider is logged at startup.
+## Run (backend)
+`./build/nft_certs_backend` — listens on `SERVER_PORT` (default 8081), SQLite at `DB_PATH` (default `data/nft-certs.db`).
 
-## Required environment variables (backend, real end-to-end run only)
-- `PINATA_JWT` (preferred) or `PINATA_API_KEY` + `PINATA_API_SECRET` — real Pinata pinning, only required when `app.storage.provider=pinata`. The app fails fast if missing in that mode; never commit these.
-- `NFT_CONTRACT_ADDRESS`, `WEB3J_RPC_URL` (default `http://localhost:8545` for local Hardhat node), `MINTER_PRIVATE_KEY` (local Hardhat test account only — never a real-funds key).
+## Environment variables
+- `APP_STORAGE_PROVIDER` = `pinata` (default, real IPFS pinning) or `mock` (local-disk fake, no credentials). Active provider is logged at startup; the app fails fast if Pinata mode lacks credentials.
+- `PINATA_JWT` (preferred) or `PINATA_API_KEY` + `PINATA_API_SECRET` — never commit these.
+- `NFT_CONTRACT_ADDRESS`, `MINTER_PRIVATE_KEY` (local Hardhat test account only — never a real-funds key), `WEB3J_RPC_URL` (default `http://localhost:8545`).
 
 ## Conventions
-- Backend package root: `com.gandarych.nftcerts`; Spring Boot conventions (constructor injection, `@Service`/`@RestController` layering, no field injection).
-- Solidity: OpenZeppelin contracts only, no hand-rolled token-standard logic.
-- Frontend: App Router, server components by default, `"use client"` only where wallet/browser APIs are needed.
-- Known simplifications (full ADR in `docs/sdlc/10-glossary-and-decisions.md`): KYC is a mock auto-verifier behind `KycVerificationService`; watermarking is metadata-based (EXIF/XMP), not steganographic; contracts run on a local Hardhat chain only. Storage is **real** Pinata pinning behind `IpfsStorageService` (a local-disk fake implements the same interface for offline unit tests only).
+- Namespace root `nftcerts::` with one sub-namespace per module (`api`, `blockchain`, `certificate`, `db`, `identity`, `storage`, ...); constructor dependency injection via references, interfaces as abstract base classes (`IpfsStorageService`, `KycVerificationService`).
+- Same known simplifications as app01 (ADR in `docs/sdlc/10-glossary-and-decisions.md`): mock KYC, metadata-based watermarking, local Hardhat chain only, real Pinata pinning behind an interface with a local stub for tests.
