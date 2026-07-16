@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="NftCerts.Tests/NftCerts.Tests.csproj" />
+  <Project Path="NftCerts/NftCerts.csproj" />
+</Solution>

@@ -1,0 +1,11 @@
+node_modules/
+artifacts/
+cache/
+coverage/
+coverage.json
+typechain-types/
+.env
+
+# Local deploy output (address/ABI from an ephemeral `npx hardhat node` run) — human/manual
+# reference only, see scripts/deploy.js; not meaningful across different local chain instances.
+deployments/
