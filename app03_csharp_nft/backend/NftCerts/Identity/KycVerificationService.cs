@@ -15,12 +15,16 @@ public class MockKycVerificationService(NftCertsDbContext db) : IKycVerification
 {
     public ArtistIdentity Verify(string walletAddress, string did, string email)
     {
-        var identity = db.ArtistIdentities.Find(walletAddress) ?? new ArtistIdentity { WalletAddress = walletAddress };
+        var identity = db.ArtistIdentities.Find(walletAddress);
+        if (identity is null)
+        {
+            identity = new ArtistIdentity { WalletAddress = walletAddress };
+            db.ArtistIdentities.Add(identity);
+        }
         identity.Did = did;
         identity.Email = email;
         identity.Verified = true;
         identity.VerifiedAt = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        db.ArtistIdentities.Update(identity);
         db.SaveChanges();
         return identity;
     }

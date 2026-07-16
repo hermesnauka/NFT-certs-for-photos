@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "GRZFnybez2A=",
+  "dgSpecHash": "rMNSFdNP3HY=",
   "success": true,
   "projectFilePath": "/home/hermes/gitrepo/hermesnauka/NFT-certs-for-photos/app03_csharp_nft/backend/NftCerts/NftCerts.csproj",
   "expectedPackageFiles": [
@@ -36,12 +36,11 @@
     "/home/hermes/.nuget/packages/nethereum.web3/6.1.0/nethereum.web3.6.1.0.nupkg.sha512",
     "/home/hermes/.nuget/packages/newtonsoft.json/11.0.2/newtonsoft.json.11.0.2.nupkg.sha512",
     "/home/hermes/.nuget/packages/questpdf/2026.7.1/questpdf.2026.7.1.nupkg.sha512",
-    "/home/hermes/.nuget/packages/sixlabors.imagesharp/4.0.0/sixlabors.imagesharp.4.0.0.nupkg.sha512",
+    "/home/hermes/.nuget/packages/sixlabors.imagesharp/2.1.13/sixlabors.imagesharp.2.1.13.nupkg.sha512",
     "/home/hermes/.nuget/packages/sqlitepclraw.bundle_e_sqlite3/2.1.11/sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
     "/home/hermes/.nuget/packages/sqlitepclraw.core/2.1.11/sqlitepclraw.core.2.1.11.nupkg.sha512",
     "/home/hermes/.nuget/packages/sqlitepclraw.lib.e_sqlite3/2.1.11/sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
-    "/home/hermes/.nuget/packages/sqlitepclraw.provider.e_sqlite3/2.1.11/sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512",
-    "/home/hermes/.nuget/packages/system.io.hashing/8.0.0/system.io.hashing.8.0.0.nupkg.sha512"
+    "/home/hermes/.nuget/packages/sqlitepclraw.provider.e_sqlite3/2.1.11/sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512"
   ],
   "logs": [
     {

@@ -80,7 +80,7 @@ public class ContractService(Web3Properties web3Properties)
             receipt = handler.SendRequestAndWaitForReceiptAsync(web3Properties.ContractAddress, message)
                 .GetAwaiter().GetResult();
         }
-        catch (Exception exception) when (exception is RpcResponseException or SmartContractRevertException)
+        catch (Exception exception) when (exception is RpcResponseException)
         {
             if (exception.Message.Contains(DuplicateHashRevertReason))
             {

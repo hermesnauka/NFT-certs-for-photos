@@ -11,7 +11,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
     <PackageReference Include="Nethereum.Web3" Version="6.1.0" />
     <PackageReference Include="QuestPDF" Version="2026.7.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="4.0.0" />
+    <!-- Pinned to the last Apache-2.0-licensed release; 3.0+ requires a Six Labors commercial
+         license key (SixLaborsLicenseKey) that this offline/course environment does not have. -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
   </ItemGroup>
 
 </Project>
