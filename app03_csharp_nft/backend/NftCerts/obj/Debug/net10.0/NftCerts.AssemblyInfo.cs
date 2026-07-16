@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NftCerts")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+49fb338da0517667811cf0e52c563360f5722ad0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+418818d2e8156d37edf45a419414373b43e11e2f")]
 [assembly: System.Reflection.AssemblyProductAttribute("NftCerts")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NftCerts")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

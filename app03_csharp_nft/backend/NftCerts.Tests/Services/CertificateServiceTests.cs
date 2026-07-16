@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using NftCerts.Certificates;
+using NftCerts.Db;
 using NftCerts.Errors;
 using NftCerts.Identity;
 using NftCerts.Storage;
@@ -78,24 +80,33 @@ public class CertificateServiceTests : IDisposable
     [Fact]
     public void MintCertificate_DuplicateContentHash_ThrowsConflict()
     {
-        // Artwork.Sha256Hash carries a DB-level unique index, so a second artwork row for the same
-        // photo can't be created via CreateArtwork; seed the second PINNED row directly to exercise
-        // CertificateService's own duplicate-hash guard against the Certificates table in isolation.
+        // Artwork.Sha256Hash carries a DB-level unique index (SQLite), so two Artwork rows sharing
+        // one hash can never coexist there — this state is unreachable via the real (SQLite-backed)
+        // app both through the API and through direct persistence. The EF Core InMemory provider
+        // doesn't enforce that relational index, so it's used here purely to isolate and assert
+        // CertificateService.MintCertificate's own duplicate-hash guard against the Certificates
+        // table, independent of that outer constraint.
         const string sharedHash = "aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd4";
-        _kyc.Verify("0xWallet", "did:key:z", "artist@example.com");
-        Artwork first = _service.CreateArtwork(SampleUpload(sharedHash), "Title", "desc", "medium", 2024, 500,
-                                                "0xWallet", "did:key:z");
-        _service.MintCertificate(first.Id, "0xRecipient");
+        var options = new DbContextOptionsBuilder<NftCertsDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        using var db = new NftCertsDbContext(options);
+        var kyc = new MockKycVerificationService(db);
+        var service = new CertificateService(db, new LocalStubIpfsStorageService(), new FakeContractService(), kyc);
+
+        kyc.Verify("0xWallet", "did:key:z", "artist@example.com");
+        Artwork first = service.CreateArtwork(SampleUpload(sharedHash), "Title", "desc", "medium", 2024, 500,
+                                               "0xWallet", "did:key:z");
+        service.MintCertificate(first.Id, "0xRecipient");
 
         var second = new Artwork
         {
             Id = "artwork-2", Sha256Hash = sharedHash, ArtistWalletAddress = "0xWallet",
             Status = ArtworkStatus.PINNED, CreatedAt = "2026-01-01T00:00:00Z",
         };
-        _db.Context.Artworks.Add(second);
-        _db.Context.SaveChanges();
+        db.Artworks.Add(second);
+        db.SaveChanges();
 
-        Assert.Throws<DuplicateContentHashException>(() => _service.MintCertificate(second.Id, "0xRecipient"));
+        Assert.Throws<DuplicateContentHashException>(() => service.MintCertificate(second.Id, "0xRecipient"));
     }
 
     [Fact]

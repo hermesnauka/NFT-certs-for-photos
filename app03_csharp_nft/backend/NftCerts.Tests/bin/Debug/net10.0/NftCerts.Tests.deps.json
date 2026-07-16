@@ -39,6 +39,7 @@
       "NftCerts.Tests/1.0.0": {
         "dependencies": {
           "Microsoft.AspNetCore.Mvc.Testing": "10.0.10",
+          "Microsoft.EntityFrameworkCore.InMemory": "10.0.10",
           "Microsoft.NET.Test.Sdk": "17.14.1",
           "NftCerts": "1.0.0",
           "coverlet.collector": "6.0.4",
@@ -473,6 +474,22 @@
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {}
+        }
+      },
+      "Microsoft.EntityFrameworkCore.InMemory/10.0.10": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "10.0.10",
+          "Microsoft.Extensions.Caching.Memory": "10.0.10",
+          "Microsoft.Extensions.Logging": "10.0.10"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.InMemory.dll": {
+            "assemblyVersion": "10.0.10.0",
+            "fileVersion": "10.0.1026.32716"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.InMemory.dll": {}
         }
       },
       "Microsoft.EntityFrameworkCore.Relational/10.0.10": {
@@ -3643,6 +3660,13 @@
       "sha512": "sha512-bOzrFCl6uZCjaSh2bG1ToRQRdx+iXvxosCg9hFyG9OWeAzOFI4xev9OqKeWfKf/kAHyox2JnbcvLVf2ceA7sqA==",
       "path": "microsoft.entityframeworkcore.abstractions/10.0.10",
       "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.10.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore.InMemory/10.0.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QRsBDbyAoEVwPu/jesXXs4/uomaA577+hl+HsPfSuFq+uxAd6TyAklU/+OB/7bYvb+eikDuC41VTEFz9l79otA==",
+      "path": "microsoft.entityframeworkcore.inmemory/10.0.10",
+      "hashPath": "microsoft.entityframeworkcore.inmemory.10.0.10.nupkg.sha512"
     },
     "Microsoft.EntityFrameworkCore.Relational/10.0.10": {
       "type": "package",

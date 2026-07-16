@@ -507,3 +507,4 @@
 /home/hermes/gitrepo/hermesnauka/NFT-certs-for-photos/app03_csharp_nft/backend/NftCerts.Tests/obj/Debug/net10.0/NftCerts.Tests.pdb
 /home/hermes/gitrepo/hermesnauka/NFT-certs-for-photos/app03_csharp_nft/backend/NftCerts.Tests/obj/Debug/net10.0/NftCerts.Tests.genruntimeconfig.cache
 /home/hermes/gitrepo/hermesnauka/NFT-certs-for-photos/app03_csharp_nft/backend/NftCerts.Tests/obj/Debug/net10.0/ref/NftCerts.Tests.dll
+/home/hermes/gitrepo/hermesnauka/NFT-certs-for-photos/app03_csharp_nft/backend/NftCerts.Tests/bin/Debug/net10.0/Microsoft.EntityFrameworkCore.InMemory.dll
