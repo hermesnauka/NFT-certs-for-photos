@@ -10,7 +10,7 @@ public class Sha256HashingServiceTests
     [Fact]
     public void Sha256Hex_OfEmptyInput_MatchesKnownVector()
     {
-        Assert.Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85",
+        Assert.Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                       _service.Sha256Hex([]));
     }
 
