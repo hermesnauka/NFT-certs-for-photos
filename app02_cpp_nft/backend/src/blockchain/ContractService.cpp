@@ -98,8 +98,8 @@ MintResult ContractService::mintCertificate(const std::string& to, const std::st
 
 std::optional<std::string> ContractService::tokenContentHash(uint64_t tokenId) {
     // Encode: selector(4) + uint256 tokenId, left-padded to 32 bytes.
-    std::vector<uint8_t> data = keccak256(std::vector<uint8_t>(
-        std::string("tokenContentHash(uint256)").begin(), std::string("tokenContentHash(uint256)").end()));
+    const std::string signature = "tokenContentHash(uint256)";
+    std::vector<uint8_t> data = keccak256(std::vector<uint8_t>(signature.begin(), signature.end()));
     std::vector<uint8_t> call(data.begin(), data.begin() + 4);
     std::vector<uint8_t> tokenIdBytes;
     uint64_t temp = tokenId;

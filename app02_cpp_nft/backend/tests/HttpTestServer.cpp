@@ -32,6 +32,8 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -204,18 +206,6 @@ void registerFakePinata() {
     drogon::app().registerHandler("/pinning/pinJSONToIPFS", handler, {drogon::Post});
 }
 
-// Owns the app thread; the destructor (static-destruction at process exit, after gtest finishes)
-// stops the loop so the process exits cleanly.
-struct AppRunner {
-    std::thread thread;
-    ~AppRunner() {
-        if (drogon::app().isRunning()) {
-            drogon::app().getLoop()->queueInLoop([] { drogon::app().quit(); });
-        }
-        if (thread.joinable()) thread.join();
-    }
-};
-
 }  // namespace
 
 HttpTestServer& HttpTestServer::instance() {
@@ -259,8 +249,9 @@ HttpTestServer::HttpTestServer() {
     drogon::app().setLogLevel(trantor::Logger::kWarn);
     drogon::app().disableSigtermHandling();
 
-    static AppRunner runner;
-    runner.thread = std::thread([] { drogon::app().run(); });
+    // The app runs until process exit; no clean shutdown is attempted because Drogon teardown is
+    // not static-destruction-safe — tests/test_main.cpp ends the process with _Exit instead.
+    std::thread([] { drogon::app().run(); }).detach();
 
     // Wait until the server actually answers.
     for (int attempt = 0; attempt < 200; ++attempt) {
@@ -307,20 +298,23 @@ drogon::HttpResponsePtr HttpTestServer::postJson(const std::string& path, const 
 
 drogon::HttpResponsePtr HttpTestServer::postMultipartFile(const std::string& path, const std::string& filename,
                                                            const std::string& content) const {
-    std::string boundary = "----TestBoundary1234567890";
-    std::string body;
-    body += "--" + boundary + "\r\n";
-    body += "Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n";
-    body += "Content-Type: application/octet-stream\r\n\r\n";
-    body += content;
-    body += "\r\n--" + boundary + "--\r\n";
+    // Drogon's multipart request builder only reads from disk, so stage the bytes in a temp file.
+    static std::atomic<int> fileCounter{0};
+    std::filesystem::path tempPath =
+        std::filesystem::temp_directory_path() / ("nftcerts-test-upload-" + std::to_string(::getpid()) + "-" +
+                                                   std::to_string(fileCounter++) + "-" + filename);
+    {
+        std::ofstream out(tempPath, std::ios::binary);
+        out.write(content.data(), static_cast<std::streamsize>(content.size()));
+    }
 
-    auto request = drogon::HttpRequest::newHttpRequest();
+    drogon::UploadFile file(tempPath.string(), filename, "file");
+    auto request = drogon::HttpRequest::newFileUploadRequest({file});
     request->setMethod(drogon::Post);
     request->setPath(path);
-    request->addHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
-    request->setBody(body);
-    return sendSync(request);
+    auto response = sendSync(request);
+    std::filesystem::remove(tempPath);
+    return response;
 }
 
 }  // namespace nftcerts::testsupport

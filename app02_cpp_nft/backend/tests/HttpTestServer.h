@@ -9,14 +9,18 @@
 #include <map>
 #include <string>
 
-// Shared in-process Drogon server for HTTP-level tests. Started lazily (once per test process)
-// on a free localhost port, it hosts:
-//   - every production API route, wired to an in-memory SQLite DB, LocalStubIpfsStorageService,
-//     mock KYC, and a ContractService whose JSON-RPC URL points back at this same server;
-//   - a fake Ethereum JSON-RPC endpoint at POST / (default: happy-path mint with an
-//     auto-incrementing tokenId; override per-test via `rpcOverride`);
-//   - a fake Pinata API at /pinning/pinFileToIPFS and /pinning/pinJSONToIPFS (failure modes via
-//     `pinataStatusOverride` / `pinataOmitIpfsHash`).
+// Shared in-process test harness for HTTP-level tests. Started lazily (once per test process),
+// it hosts two servers:
+//   - the production Drogon app (`baseUrl()`): every production API route, wired to an in-memory
+//     SQLite DB, LocalStubIpfsStorageService, mock KYC, and a ContractService whose JSON-RPC URL
+//     points at the fake upstream below;
+//   - a minimal standalone HTTP server on its own thread (`upstreamUrl()`) faking the Ethereum
+//     JSON-RPC endpoint (POST /; default: happy-path mint with an auto-incrementing tokenId;
+//     override per-test via `rpcOverride`) and the Pinata API (/pinning/*; failure modes via
+//     `pinataStatusOverride` / `pinataOmitIpfsHash`). It is deliberately NOT part of the Drogon
+//     app: handlers make nested synchronous outbound calls, and if the upstream lived on the same
+//     Drogon app the inbound RPC connection could be assigned to the very IO thread the blocked
+//     handler occupies — a deadlock.
 //
 // drogon::app() is a process-wide singleton, so there is exactly one server per test process;
 // ctest (gtest_discover_tests) runs each test case in its own process, which keeps tests isolated.
@@ -24,10 +28,12 @@ namespace nftcerts::testsupport {
 
 class HttpTestServer {
 public:
-    // Starts the server on first call; subsequent calls return the same instance.
+    // Starts the servers on first call; subsequent calls return the same instance.
     static HttpTestServer& instance();
 
     const std::string& baseUrl() const { return baseUrl_; }
+    // Base URL of the fake JSON-RPC + Pinata upstream.
+    const std::string& upstreamUrl() const { return upstreamUrl_; }
 
     // Sends a request to the test server synchronously (10 s timeout, throws on transport error).
     drogon::HttpResponsePtr sendSync(const drogon::HttpRequestPtr& request) const;
@@ -64,6 +70,7 @@ private:
     ~HttpTestServer();
 
     std::string baseUrl_;
+    std::string upstreamUrl_;
 };
 
 }  // namespace nftcerts::testsupport

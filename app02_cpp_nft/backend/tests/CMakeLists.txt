@@ -16,7 +16,9 @@ FetchContent_MakeAvailable(googletest)
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS *.cpp)
 
 add_executable(nft_certs_backend_tests ${TEST_SOURCES})
-target_link_libraries(nft_certs_backend_tests PRIVATE nftcerts_core gtest gtest_main gmock)
+# gtest_main is intentionally not linked: tests/test_main.cpp provides main() with a _Exit-based
+# shutdown that sidesteps Drogon's non-static-destruction-safe teardown (see comment there).
+target_link_libraries(nft_certs_backend_tests PRIVATE nftcerts_core gtest gmock)
 target_include_directories(nft_certs_backend_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(GoogleTest)
