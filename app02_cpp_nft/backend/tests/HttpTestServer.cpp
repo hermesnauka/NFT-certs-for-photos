@@ -114,96 +114,190 @@ std::string tokenIdTopic(uint64_t tokenId) {
     return "0x" + std::string(64 - raw.size(), '0') + raw;
 }
 
-void registerFakeJsonRpc() {
-    drogon::app().registerHandler(
-        "/",
-        [](const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
-            auto body = req->getJsonObject();
-            Json::Value reply;
-            reply["jsonrpc"] = "2.0";
-            reply["id"] = body ? (*body)["id"] : Json::Value(0);
-
-            std::string method = body ? (*body)["method"].asString() : "";
-            Json::Value params = body ? (*body)["params"] : Json::Value(Json::arrayValue);
-
-            Json::Value result;
-            std::string errorMessage;
-            bool handled = false;
-            if (HttpTestServer::rpcOverride) {
-                handled = HttpTestServer::rpcOverride(method, params, result, errorMessage);
-            }
-
-            if (!handled) {
-                // Default happy-path chain: every sendRawTransaction mints the next tokenId and
-                // its receipt is immediately available with a matching CertificateMinted log.
-                static std::atomic<uint64_t> nextTokenId{0};
-                static std::atomic<uint64_t> lastTokenId{0};
-                if (method == "eth_chainId") {
-                    result = "0x7a69";  // 31337
-                } else if (method == "eth_getTransactionCount") {
-                    result = "0x0";
-                } else if (method == "eth_sendRawTransaction") {
-                    lastTokenId = ++nextTokenId;
-                    result = "0xfaketxhash" + std::to_string(lastTokenId.load());
-                } else if (method == "eth_getTransactionReceipt") {
-                    result = Json::Value(Json::objectValue);
-                    result["status"] = "0x1";
-                    Json::Value log;
-                    Json::Value topics(Json::arrayValue);
-                    topics.append(blockchain::certificateMintedEventTopic0());
-                    topics.append(tokenIdTopic(lastTokenId.load()));
-                    topics.append("0x0000000000000000000000007099" + std::string(36, '0'));
-                    log["topics"] = topics;
-                    log["data"] = "0x";
-                    Json::Value logs(Json::arrayValue);
-                    logs.append(log);
-                    result["logs"] = logs;
-                } else if (method == "eth_call") {
-                    result = "0x";
-                } else {
-                    errorMessage = "unsupported fake RPC method: " + method;
-                }
-            }
-
-            if (!errorMessage.empty()) {
-                Json::Value error;
-                error["code"] = -32000;
-                error["message"] = errorMessage;
-                reply["error"] = error;
-            } else {
-                reply["result"] = result;
-            }
-            callback(drogon::HttpResponse::newHttpJsonResponse(reply));
-        },
-        {drogon::Post});
+std::string toLowerCopy(const std::string& s) {
+    std::string result = s;
+    for (char& c : result) c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+    return result;
 }
 
-void registerFakePinata() {
-    auto handler = [](const drogon::HttpRequestPtr& req,
-                       std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
-        HttpTestServer::lastPinataHeaders.clear();
-        for (const char* name : {"authorization", "pinata_api_key", "pinata_secret_api_key"}) {
-            std::string value = req->getHeader(name);
-            if (!value.empty()) HttpTestServer::lastPinataHeaders[name] = value;
-        }
+std::string serializeJson(const Json::Value& value) {
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = "";
+    return Json::writeString(writer, value);
+}
 
-        int statusOverride = HttpTestServer::pinataStatusOverride.load();
-        if (statusOverride != 0) {
-            auto response = drogon::HttpResponse::newHttpResponse();
-            response->setStatusCode(static_cast<drogon::HttpStatusCode>(statusOverride));
-            callback(response);
+std::string fakeJsonRpcReply(const std::string& requestBody) {
+    Json::CharReaderBuilder reader;
+    Json::Value request;
+    std::string errs;
+    std::istringstream stream(requestBody);
+    Json::parseFromStream(reader, stream, &request, &errs);
+
+    Json::Value reply;
+    reply["jsonrpc"] = "2.0";
+    reply["id"] = request["id"];
+
+    std::string method = request["method"].asString();
+    Json::Value params = request["params"];
+
+    Json::Value result;
+    std::string errorMessage;
+    bool handled = false;
+    if (HttpTestServer::rpcOverride) {
+        handled = HttpTestServer::rpcOverride(method, params, result, errorMessage);
+    }
+
+    if (!handled) {
+        // Default happy-path chain: every sendRawTransaction mints the next tokenId and its
+        // receipt is immediately available with a matching CertificateMinted log.
+        static std::atomic<uint64_t> nextTokenId{0};
+        static std::atomic<uint64_t> lastTokenId{0};
+        if (method == "eth_chainId") {
+            result = "0x7a69";  // 31337
+        } else if (method == "eth_getTransactionCount") {
+            result = "0x0";
+        } else if (method == "eth_sendRawTransaction") {
+            lastTokenId = ++nextTokenId;
+            result = "0xfaketxhash" + std::to_string(lastTokenId.load());
+        } else if (method == "eth_getTransactionReceipt") {
+            result = Json::Value(Json::objectValue);
+            result["status"] = "0x1";
+            Json::Value log;
+            Json::Value topics(Json::arrayValue);
+            topics.append(blockchain::certificateMintedEventTopic0());
+            topics.append(tokenIdTopic(lastTokenId.load()));
+            topics.append("0x0000000000000000000000007099" + std::string(36, '0'));
+            log["topics"] = topics;
+            log["data"] = "0x";
+            Json::Value logs(Json::arrayValue);
+            logs.append(log);
+            result["logs"] = logs;
+        } else if (method == "eth_call") {
+            result = "0x";
+        } else {
+            errorMessage = "unsupported fake RPC method: " + method;
+        }
+    }
+
+    if (!errorMessage.empty()) {
+        Json::Value error;
+        error["code"] = -32000;
+        error["message"] = errorMessage;
+        reply["error"] = error;
+    } else {
+        reply["result"] = result;
+    }
+    return serializeJson(reply);
+}
+
+// Handles one upstream connection: parses a single HTTP/1.1 request just well enough for the
+// small JSON POSTs Drogon's HttpClient produces, dispatches to the fake RPC or fake Pinata, and
+// replies with Connection: close.
+void handleUpstreamConnection(int fd) {
+    std::string raw;
+    char buffer[4096];
+    size_t headerEnd = std::string::npos;
+    while (headerEnd == std::string::npos) {
+        ssize_t n = ::recv(fd, buffer, sizeof(buffer), 0);
+        if (n <= 0) {
+            ::close(fd);
             return;
         }
+        raw.append(buffer, static_cast<size_t>(n));
+        headerEnd = raw.find("\r\n\r\n");
+    }
 
-        Json::Value body;
-        if (!HttpTestServer::pinataOmitIpfsHash.load()) {
-            body["IpfsHash"] = "QmFakePinataCid";
+    std::string headerBlock = raw.substr(0, headerEnd);
+    std::string body = raw.substr(headerEnd + 4);
+
+    std::string requestLine = headerBlock.substr(0, headerBlock.find("\r\n"));
+    std::istringstream requestLineStream(requestLine);
+    std::string httpMethod, path;
+    requestLineStream >> httpMethod >> path;
+
+    size_t contentLength = 0;
+    std::map<std::string, std::string> headers;
+    std::istringstream headerStream(headerBlock);
+    std::string line;
+    std::getline(headerStream, line);  // skip request line
+    while (std::getline(headerStream, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        size_t colon = line.find(':');
+        if (colon == std::string::npos) continue;
+        std::string name = toLowerCopy(line.substr(0, colon));
+        std::string value = line.substr(colon + 1);
+        size_t start = value.find_first_not_of(' ');
+        value = (start == std::string::npos) ? "" : value.substr(start);
+        headers[name] = value;
+        if (name == "content-length") contentLength = std::stoul(value);
+    }
+
+    while (body.size() < contentLength) {
+        ssize_t n = ::recv(fd, buffer, sizeof(buffer), 0);
+        if (n <= 0) break;
+        body.append(buffer, static_cast<size_t>(n));
+    }
+
+    std::string status = "200 OK";
+    std::string responseBody;
+    if (path.rfind("/pinning/", 0) == 0) {
+        HttpTestServer::lastPinataHeaders.clear();
+        for (const char* name : {"authorization", "pinata_api_key", "pinata_secret_api_key"}) {
+            auto it = headers.find(name);
+            if (it != headers.end()) HttpTestServer::lastPinataHeaders[name] = it->second;
         }
-        body["PinSize"] = 1234;
-        callback(drogon::HttpResponse::newHttpJsonResponse(body));
-    };
-    drogon::app().registerHandler("/pinning/pinFileToIPFS", handler, {drogon::Post});
-    drogon::app().registerHandler("/pinning/pinJSONToIPFS", handler, {drogon::Post});
+        int statusOverride = HttpTestServer::pinataStatusOverride.load();
+        if (statusOverride != 0) {
+            status = std::to_string(statusOverride) + " Error";
+        } else {
+            Json::Value pinataReply;
+            if (!HttpTestServer::pinataOmitIpfsHash.load()) {
+                pinataReply["IpfsHash"] = "QmFakePinataCid";
+            }
+            pinataReply["PinSize"] = 1234;
+            responseBody = serializeJson(pinataReply);
+        }
+    } else {
+        responseBody = fakeJsonRpcReply(body);
+    }
+
+    std::string response = "HTTP/1.1 " + status +
+                            "\r\nContent-Type: application/json\r\nContent-Length: " +
+                            std::to_string(responseBody.size()) + "\r\nConnection: close\r\n\r\n" +
+                            responseBody;
+    ::send(fd, response.data(), response.size(), MSG_NOSIGNAL);
+    ::close(fd);
+}
+
+// Starts the fake upstream on an ephemeral port and returns it. The accept thread runs for the
+// rest of the process (test_main.cpp ends with _Exit, so nothing needs joining).
+int startFakeUpstream() {
+    int listenFd = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (listenFd < 0) throw std::runtime_error("upstream socket() failed");
+    int reuse = 1;
+    ::setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0;
+    if (::bind(listenFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0 ||
+        ::listen(listenFd, 16) != 0) {
+        ::close(listenFd);
+        throw std::runtime_error("upstream bind/listen failed");
+    }
+    socklen_t len = sizeof(addr);
+    ::getsockname(listenFd, reinterpret_cast<sockaddr*>(&addr), &len);
+    int port = ntohs(addr.sin_port);
+
+    std::thread([listenFd] {
+        while (true) {
+            int fd = ::accept(listenFd, nullptr, nullptr);
+            if (fd < 0) continue;
+            std::thread(handleUpstreamConnection, fd).detach();
+        }
+    }).detach();
+
+    return port;
 }
 
 }  // namespace
@@ -214,12 +308,14 @@ HttpTestServer& HttpTestServer::instance() {
 }
 
 HttpTestServer::HttpTestServer() {
+    upstreamUrl_ = "http://127.0.0.1:" + std::to_string(startFakeUpstream());
+
     int port = findFreePort();
     baseUrl_ = "http://127.0.0.1:" + std::to_string(port);
 
     Services& s = services();
     config::Web3Properties web3;
-    web3.rpcUrl = baseUrl_;
+    web3.rpcUrl = upstreamUrl_;
     web3.minterPrivateKey = kMinterKey;
     web3.contractAddress = contractAddress();
     s.contractService = std::make_unique<blockchain::ContractService>(web3);
@@ -239,8 +335,6 @@ HttpTestServer::HttpTestServer() {
     api::registerArtistDashboardRoutes(*s.certificateService, *s.dtoMapper);
     api::registerI18nRoutes();
     api::registerIdentityRoutes(s.kycService);
-    registerFakeJsonRpc();
-    registerFakePinata();
 
     drogon::app().addListener("127.0.0.1", static_cast<uint16_t>(port));
     // Multiple IO threads so a handler blocked on a nested sync HTTP call (mint -> fake RPC on

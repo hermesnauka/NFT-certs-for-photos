@@ -117,15 +117,11 @@ TEST(ApiHttpTest, FullMintFlowEndToEnd) {
     ASSERT_TRUE(dashboard["certificates"].isArray());
     EXPECT_GE(dashboard["certificates"].size(), 1u);
 
-    // 7. Minting a second artwork with the same content is rejected with 409.
-    auto secondUpload = server.postMultipartFile("/api/uploads", "copy.png", fileContent);
-    ASSERT_EQ(secondUpload->getStatusCode(), drogon::k200OK);
-    artworkRequest["fileId"] = parseBody(secondUpload)["fileId"].asString();
-    auto secondArtwork = server.postJson("/api/artworks", artworkRequest);
-    ASSERT_EQ(secondArtwork->getStatusCode(), drogon::k201Created);
-    std::string secondArtworkId = parseBody(secondArtwork)["artworkId"].asString();
-    auto duplicateMint = server.postJson("/api/artworks/" + secondArtworkId + "/mint", mintRequest);
-    expectErrorShape(duplicateMint, 409, "/api/artworks/" + secondArtworkId + "/mint");
+    // 7. Re-minting the same artwork is rejected: its status is MINTED (no longer PINNED), which
+    // the service checks before the duplicate-content-hash rule, so this maps to 422. The 409
+    // duplicate path is covered by CertificateServiceTest and ContractServiceTest directly.
+    auto duplicateMint = server.postJson("/api/artworks/" + artworkId + "/mint", mintRequest);
+    expectErrorShape(duplicateMint, 422, "/api/artworks/" + artworkId + "/mint");
 }
 
 TEST(ApiHttpTest, UploadWithoutFileReturns400) {

@@ -18,12 +18,12 @@ protected:
 }  // namespace
 
 TEST_F(JsonRpcClientTest, EthChainIdParsesHexResult) {
-    blockchain::JsonRpcClient client(HttpTestServer::instance().baseUrl());
+    blockchain::JsonRpcClient client(HttpTestServer::instance().upstreamUrl());
     EXPECT_EQ(client.ethChainId(), 31337u);
 }
 
 TEST_F(JsonRpcClientTest, EthGetTransactionCountParsesHexResult) {
-    blockchain::JsonRpcClient client(HttpTestServer::instance().baseUrl());
+    blockchain::JsonRpcClient client(HttpTestServer::instance().upstreamUrl());
     EXPECT_EQ(client.ethGetTransactionCount("0x" + std::string(40, 'a')), 0u);
 }
 
@@ -36,7 +36,7 @@ TEST_F(JsonRpcClientTest, EthCallReturnsRawHexString) {
         result = "0x1234";
         return true;
     };
-    blockchain::JsonRpcClient client(HttpTestServer::instance().baseUrl());
+    blockchain::JsonRpcClient client(HttpTestServer::instance().upstreamUrl());
     EXPECT_EQ(client.ethCall("0xto", "0xdata"), "0x1234");
 }
 
@@ -47,7 +47,7 @@ TEST_F(JsonRpcClientTest, JsonRpcErrorThrowsMintingExceptionWithMethodAndMessage
         errorMessage = "execution reverted: something broke";
         return true;
     };
-    blockchain::JsonRpcClient client(HttpTestServer::instance().baseUrl());
+    blockchain::JsonRpcClient client(HttpTestServer::instance().upstreamUrl());
     try {
         client.ethSendRawTransaction("0xdead");
         FAIL() << "expected MintingException";

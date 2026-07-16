@@ -18,7 +18,7 @@ protected:
     config::PinataProperties propsWithJwt() {
         config::PinataProperties props;
         props.jwt = "test-jwt";
-        props.baseUrl = HttpTestServer::instance().baseUrl();
+        props.baseUrl = HttpTestServer::instance().upstreamUrl();
         return props;
     }
 };
@@ -38,7 +38,7 @@ TEST_F(PinataStorageTest, PinJsonSendsApiKeyPairHeaders) {
     config::PinataProperties props;
     props.apiKey = "key-123";
     props.apiSecret = "secret-456";
-    props.baseUrl = HttpTestServer::instance().baseUrl();
+    props.baseUrl = HttpTestServer::instance().upstreamUrl();
     storage::PinataIpfsStorageService service(props);
 
     Json::Value payload;

@@ -19,7 +19,7 @@ protected:
 
     blockchain::ContractService makeService() {
         config::Web3Properties web3;
-        web3.rpcUrl = HttpTestServer::instance().baseUrl();
+        web3.rpcUrl = HttpTestServer::instance().upstreamUrl();
         web3.minterPrivateKey = kMinterKey;
         web3.contractAddress = HttpTestServer::contractAddress();
         return blockchain::ContractService(web3);
